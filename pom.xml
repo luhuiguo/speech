@@ -1,0 +1,79 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.luhuiguo.speech</groupId>
+	<artifactId>speech</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>Speech</name>
+	<url>http://www.gildata.com</url>
+
+	<developers>
+		<developer>
+			<id>lhg</id>
+			<name>Lu,Huiguo</name>
+			<email>luhuiguo@gmail.com</email>
+			<url>http://luhuiguo.github.io/</url>
+			<timezone>+8</timezone>
+		</developer>
+	</developers>
+
+	<licenses />
+
+	<issueManagement>
+		<system>github</system>
+		<url>https://github.com/luhuiguo/speech/issues</url>
+	</issueManagement>
+
+	<scm>
+		<connection>scm:git:https://github.com/luhuiguo/speech.git</connection>
+		<developerConnection>scm:git:https://github.com/luhuiguo/speech.git</developerConnection>
+		<url>https://github.com/luhuiguo/speech</url>
+	</scm>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<project_charset>UTF-8</project_charset>
+		<maven.compiler.source>1.6</maven.compiler.source>
+		<maven.compiler.target>1.6</maven.compiler.target>
+
+		<junit.version>4.11</junit.version>
+		<jna.version>4.1.0</jna.version>
+		<msc.version>1.012</msc.version>
+	</properties>
+
+	<dependencies>
+		<!-- JUnit -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- MSC -->
+		<dependency>
+			<groupId>com.iflytek.msc</groupId>
+			<artifactId>msc</artifactId>
+			<version>${msc.version}</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/Msc.jar</systemPath>
+		</dependency>
+
+		<!-- JNA -->
+		<dependency>
+			<groupId>net.java.dev.jna</groupId>
+			<artifactId>jna</artifactId>
+			<version>${jna.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.java.dev.jna</groupId>
+			<artifactId>jna-platform</artifactId>
+			<version>${jna.version}</version>
+		</dependency>
+	</dependencies>
+
+</project>
