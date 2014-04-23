@@ -39,6 +39,7 @@
 		<project_charset>UTF-8</project_charset>
 		<maven.compiler.source>1.6</maven.compiler.source>
 		<maven.compiler.target>1.6</maven.compiler.target>
+		<java.library.path>/usr/local/lib</java.library.path>
 
 		<junit.version>4.11</junit.version>
 		<jna.version>4.1.0</jna.version>
@@ -60,7 +61,7 @@
 			<artifactId>msc</artifactId>
 			<version>${msc.version}</version>
 			<scope>system</scope>
-			<systemPath>${basedir}/lib/Msc.jar</systemPath>
+			<systemPath>${project.basedir}/lib/Msc.jar</systemPath>
 		</dependency>
 
 		<!-- JNA -->
