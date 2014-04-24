@@ -6,14 +6,17 @@ import static com.iflytek.msc.MSC.QTTSInit;
 import static com.iflytek.msc.MSC.QTTSSessionBegin;
 import static com.iflytek.msc.MSC.QTTSSessionEnd;
 import static com.iflytek.msc.MSC.QTTSTextPut;
+import static java.util.Arrays.copyOf;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.apache.commons.io.FileUtils.getFile;
+import static org.apache.commons.io.FileUtils.write;
 import static org.apache.commons.io.FileUtils.writeByteArrayToFile;
 import static org.apache.commons.io.FilenameUtils.EXTENSION_SEPARATOR;
 import static org.apache.commons.io.FilenameUtils.isExtension;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -22,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.iflytek.msc.MSCSessionInfo;
+import com.sun.jna.Pointer;
 
 public class Synthesizer {
 
@@ -90,18 +94,21 @@ public class Synthesizer {
 		deleteQuietly(amrFile);
 		File pcmFile = getFile(pcmFilename);
 		deleteQuietly(pcmFile);
-		logger.info("\nTEXT: {} \n>>>>>\n PCM: {}", text, pcmFile.getAbsolutePath());
+		logger.info("\nTEXT: {} \n>>>>>\n PCM: {}", text,
+				pcmFile.getAbsolutePath());
 		int ret = textToPcm(text, pcmFile, params);
 		if (0 != ret) {
 			logger.error("textToPcm failed, error code is {}", ret);
 			return ret;
 		}
-		logger.info("\nPCM: {} \n>>>>>\n AMR: {}", pcmFile.getAbsolutePath(), amrFile.getAbsolutePath());
+		logger.info("\nPCM: {} \n>>>>>\n AMR: {}", pcmFile.getAbsolutePath(),
+				amrFile.getAbsolutePath());
 		ret = pcmToAmr(pcmFile, amrFile);
-		if (0 != ret) {
+		if (ret <= 0) {
 			logger.error("pcmToAmr failed, error code is {}", ret);
+			return -1;
 		}
-		return ret;
+		return 0;
 
 	}
 
@@ -131,7 +138,7 @@ public class Synthesizer {
 		/* 获取合成音频 */
 		while (true) {
 			byte[] result = QTTSAudioGet(sessionId, info);
-			//logger.info("{}",result);
+			// logger.info("{}",result);
 			ret = info.errorcode;
 			if (0 != ret) {
 				logger.error("QTTSAudioGet failed, error code is {}", ret);
@@ -160,8 +167,73 @@ public class Synthesizer {
 
 	public static int pcmToAmr(File pcmFile, File amrFile) {
 
-		return 0;
+		int dtx = 0;
+		int count = 0;
+		int frames = 0;
+		int bytes = 0;
 
+		try {
+			write(amrFile, AMR_MAGIC_NUMBER);
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+			return -1;
+		}
+
+		Pointer amr = AmrLibrary.INSTANCE.Encoder_Interface_init(dtx);
+		short[] speech = null;
+
+		byte[] amrFrame = new byte[MAX_AMR_FRAME_SIZE];
+
+		try {
+			FileInputStream in = new FileInputStream(pcmFile);
+			while (null != (speech = readFrame(in))) {
+				frames++;
+				count = AmrLibrary.INSTANCE.Encoder_Interface_Encode(amr, amrMode,
+						speech, amrFrame, 0);
+				bytes += count;
+
+				logger.debug("frame: {} bytes: {}", frames, bytes);
+
+				try {
+					writeByteArrayToFile(amrFile,
+							amrFrame = copyOf(amrFrame, count), true);
+				} catch (IOException e) {
+					logger.error(e.getMessage(), e);
+					break;
+				}
+
+			}
+			in.close();
+
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+			return -1;
+		}
+
+		AmrLibrary.INSTANCE.Encoder_Interface_exit(amr);
+
+		return frames;
+
+	}
+
+	public static short[] readFrame(InputStream in) {
+		byte[] buf = new byte[PCM_FRAME_SIZE * 2];
+		short[] pcmFrame = new short[PCM_FRAME_SIZE];
+		int count = 0;
+		try {
+			count = in.read(buf);
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+			return null;
+		}
+		for (int i = 0; i < PCM_FRAME_SIZE; i++) {
+			pcmFrame[i] = ((short) ((buf[i * 2] & 0xff) | (buf[i * 2 + 1] << 8)));
+		}
+		if (count < PCM_FRAME_SIZE * 2){
+			return null;
+		}
+
+		return pcmFrame;
 	}
 
 }
