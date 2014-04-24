@@ -6,3 +6,6 @@ target/
 logs/*
 !gitkeep
 /target
+*.log
+msc/*
+.*~
