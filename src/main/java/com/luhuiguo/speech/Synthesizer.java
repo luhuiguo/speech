@@ -6,6 +6,7 @@ import static com.iflytek.msc.MSC.QTTSInit;
 import static com.iflytek.msc.MSC.QTTSSessionBegin;
 import static com.iflytek.msc.MSC.QTTSSessionEnd;
 import static com.iflytek.msc.MSC.QTTSTextPut;
+import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.apache.commons.io.FileUtils.getFile;
 import static org.apache.commons.io.FileUtils.writeByteArrayToFile;
 import static org.apache.commons.io.FilenameUtils.EXTENSION_SEPARATOR;
@@ -85,18 +86,18 @@ public class Synthesizer {
 		}
 		String pcmFilename = removeExtension(filename) + EXTENSION_SEPARATOR
 				+ PCM_EXTENSION;
-		File armFile = getFile(filename);
-
+		File amrFile = getFile(filename);
+		deleteQuietly(amrFile);
 		File pcmFile = getFile(pcmFilename);
-
-		logger.info("TEXT: {} /n>>>>>/n PCM: {}", text, pcmFilename);
+		deleteQuietly(pcmFile);
+		logger.info("\nTEXT: {} \n>>>>>\n PCM: {}", text, pcmFile.getAbsolutePath());
 		int ret = textToPcm(text, pcmFile, params);
 		if (0 != ret) {
 			logger.error("textToPcm failed, error code is {}", ret);
 			return ret;
 		}
-		logger.info("PCM: {} /n>>>>>/n AMR: {}", pcmFilename, filename);
-		ret = pcmToAmr(pcmFile, armFile);
+		logger.info("\nPCM: {} \n>>>>>\n AMR: {}", pcmFile.getAbsolutePath(), amrFile.getAbsolutePath());
+		ret = pcmToAmr(pcmFile, amrFile);
 		if (0 != ret) {
 			logger.error("pcmToAmr failed, error code is {}", ret);
 		}
@@ -118,7 +119,7 @@ public class Synthesizer {
 			logger.error("QTTSSessionBegin failed, error code is {}", ret);
 			return ret;
 		}
-		logger.info("QTTSSessionBegin, session_id is {}", sessionId);
+		logger.info("QTTSSession: {}", new String(sessionId));
 		logger.info("QTTSTextPut, text is {}", text);
 		ret = QTTSTextPut(sessionId, text.getBytes());
 		if (0 != ret) {
@@ -130,6 +131,7 @@ public class Synthesizer {
 		/* 获取合成音频 */
 		while (true) {
 			byte[] result = QTTSAudioGet(sessionId, info);
+			//logger.info("{}",result);
 			ret = info.errorcode;
 			if (0 != ret) {
 				logger.error("QTTSAudioGet failed, error code is {}", ret);
