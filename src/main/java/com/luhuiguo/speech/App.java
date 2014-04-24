@@ -52,12 +52,7 @@ public class App
 			System.out.println("QTTSSessionEnd: qtts end failed Error code "
 					+ ret);
 		}
-		// System.out.println(info.errorcode);
 
-		// while(result == null){
-		// result = MSC.QTTSAudioGet(session_id, info);
-		// System.out.println(result);
-		// }
 
 	}
 }
