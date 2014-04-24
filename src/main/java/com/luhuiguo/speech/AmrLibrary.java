@@ -19,7 +19,7 @@ public interface AmrLibrary extends Library {
 
 	void Encoder_Interface_exit(Pointer state);
 
-	int Encoder_Interface_Encode(Pointer state, Mode mode, short[] speech,
+	int Encoder_Interface_Encode(Pointer state, int mode, short[] speech,
 			byte[] out, int forceSpeech);
 
 }

@@ -188,7 +188,7 @@ public class Synthesizer {
 			FileInputStream in = new FileInputStream(pcmFile);
 			while (null != (speech = readFrame(in))) {
 				frames++;
-				count = AmrLibrary.INSTANCE.Encoder_Interface_Encode(amr, amrMode,
+				count = AmrLibrary.INSTANCE.Encoder_Interface_Encode(amr, amrMode.ordinal(),
 						speech, amrFrame, 0);
 				bytes += count;
 
