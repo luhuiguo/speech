@@ -1,11 +1,5 @@
 package com.luhuiguo.speech;
 
-//import static com.iflytek.msc.MSC.QTTSAudioGet;
-//import static com.iflytek.msc.MSC.QTTSFini;
-//import static com.iflytek.msc.MSC.QTTSInit;
-//import static com.iflytek.msc.MSC.QTTSSessionBegin;
-//import static com.iflytek.msc.MSC.QTTSSessionEnd;
-//import static com.iflytek.msc.MSC.QTTSTextPut;
 import static java.util.Arrays.copyOf;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.apache.commons.io.FileUtils.getFile;
@@ -66,7 +60,6 @@ public class Synthesizer {
 	public static int initialization() {
 		String configs = "appid=" + appId;
 		logger.info("QTTSInit, appid is {}", appId);
-		// int ret = QTTSInit(configs.getBytes());
 		int ret = MscLibrary.INSTANCE.QTTSInit(configs);
 		if (0 != ret) {
 			logger.error("QTTSInit failed, error code is {}", ret);
@@ -77,7 +70,6 @@ public class Synthesizer {
 	public static int finalization() {
 
 		logger.info("QTTSFini");
-		// int ret = QTTSFini();
 		int ret = MscLibrary.INSTANCE.QTTSFini();
 		if (0 != ret) {
 			logger.error("QTTSFini failed, error code is {}", ret);
@@ -120,9 +112,7 @@ public class Synthesizer {
 		if (null != params) {
 			synthParams = params;
 		}
-		//MSCSessionInfo info = new MSCSessionInfo();
 		logger.info("QTTSSessionBegin, params is {}", synthParams);
-		// char[] sessionId = QTTSSessionBegin(synthParams.getBytes(), info);
 		IntByReference errorCode = new IntByReference();
 		String sessionID = MscLibrary.INSTANCE.QTTSSessionBegin(synthParams,
 				errorCode);
@@ -133,7 +123,7 @@ public class Synthesizer {
 		}
 		logger.info("QTTSSession: {}", sessionID);
 		logger.info("QTTSTextPut, text is {}", text);
-		ret = MscLibrary.INSTANCE.QTTSTextPut(sessionID, text, text.length(),
+		ret = MscLibrary.INSTANCE.QTTSTextPut(sessionID, text, text.getBytes().length,
 				null);
 		if (0 != ret) {
 			logger.error("QTTSTextPut failed, error code is {}", ret);
@@ -147,16 +137,17 @@ public class Synthesizer {
 			IntByReference synthStatus = new IntByReference();
 			Pointer result = MscLibrary.INSTANCE.QTTSAudioGet(sessionID,
 					audioLen, synthStatus, errorCode);
-			// logger.info("{}",result);
 			ret = errorCode.getValue();
 			if (0 != ret) {
 				logger.error("QTTSAudioGet failed, error code is {}", ret);
 				break;
 			}
 			try {
+				int len = audioLen.getValue();
+				logger.info("audioLen: {}", len);
+				byte[] data = result.getByteArray(0, len);
 
-				writeByteArrayToFile(file,
-						result.getByteArray(0, audioLen.getValue()), true);
+				writeByteArrayToFile(file, data, true);
 			} catch (IOException e) {
 				logger.error(e.getMessage(), e);
 				break;

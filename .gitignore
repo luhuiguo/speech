@@ -1,11 +1,8 @@
-.classpath
-.project
 .DS_Store
 .settings/
 target/
 logs/*
 !gitkeep
-/target
 *.log
 msc/*
 .*~

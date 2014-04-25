@@ -20,7 +20,7 @@ public class SynthesizerTest {
 
 	@Test
 	public void test() {
-		int ret = Synthesizer.textToAmr("我在测试语音合成", "test.amr", null);
+		int ret = Synthesizer.textToAmr("我在测试语音合成我在测试语音合成我在测试语音合成", "target/test.amr", null);
 		assertEquals(0, ret);
 	}
 
