@@ -188,8 +188,8 @@ public class Synthesizer {
 			FileInputStream in = new FileInputStream(pcmFile);
 			while (null != (speech = readFrame(in))) {
 				frames++;
-				count = AmrLibrary.INSTANCE.Encoder_Interface_Encode(amr, amrMode.ordinal(),
-						speech, amrFrame, 0);
+				count = AmrLibrary.INSTANCE.Encoder_Interface_Encode(amr,
+						amrMode.ordinal(), speech, amrFrame, 0);
 				bytes += count;
 
 				logger.debug("frame: {} bytes: {}", frames, bytes);
@@ -229,11 +229,35 @@ public class Synthesizer {
 		for (int i = 0; i < PCM_FRAME_SIZE; i++) {
 			pcmFrame[i] = ((short) ((buf[i * 2] & 0xff) | (buf[i * 2 + 1] << 8)));
 		}
-		if (count < PCM_FRAME_SIZE * 2){
+		if (count < PCM_FRAME_SIZE * 2) {
 			return null;
 		}
 
 		return pcmFrame;
 	}
 
+	public static void main(String[] args) {
+		
+		if(args.length < 2){
+			
+			System.out.println("usage: java -jar speech[-version].jar text filename [params] ");
+			
+		}else{
+			
+			String text = args[0];
+			String filename = args[1];
+			String params = null;
+			if (args.length > 2){
+				params = args[2];
+			}
+			
+			Synthesizer.initialization();
+			
+			Synthesizer.textToAmr(text, filename, params);
+	              
+			Synthesizer.finalization();
+		}
+
+
+	}
 }
