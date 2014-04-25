@@ -206,6 +206,7 @@ public class Synthesizer {
 
 			}
 			in.close();
+			deleteQuietly(pcmFile);
 
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
