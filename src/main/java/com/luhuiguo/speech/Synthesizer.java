@@ -88,14 +88,14 @@ public class Synthesizer {
 		deleteQuietly(amrFile);
 		File pcmFile = getFile(pcmFilename);
 		deleteQuietly(pcmFile);
-		logger.info("\nTEXT: {} \n>>>>>\n PCM: {}", text,
+		logger.info("TEXT: {} >> PCM: {}", text,
 				pcmFile.getAbsolutePath());
 		int ret = textToPcm(text, pcmFile, params);
 		if (0 != ret) {
 			logger.error("textToPcm failed, error code is {}", ret);
 			return ret;
 		}
-		logger.info("\nPCM: {} \n>>>>>\n AMR: {}", pcmFile.getAbsolutePath(),
+		logger.info("PCM: {} >> AMR: {}", pcmFile.getAbsolutePath(),
 				amrFile.getAbsolutePath());
 		ret = pcmToAmr(pcmFile, amrFile);
 		if (ret <= 0) {
