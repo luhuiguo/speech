@@ -243,7 +243,7 @@ public class Synthesizer {
 		if (args.length < 2) {
 
 			System.out
-					.println("usage: java -jar speech[-version].jar text filename [params] ");
+					.println("usage: java -jar speech.jar text filename [params] ");
 
 		} else {
 
