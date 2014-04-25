@@ -1,11 +1,11 @@
 package com.luhuiguo.speech;
 
-import static com.iflytek.msc.MSC.QTTSAudioGet;
-import static com.iflytek.msc.MSC.QTTSFini;
-import static com.iflytek.msc.MSC.QTTSInit;
-import static com.iflytek.msc.MSC.QTTSSessionBegin;
-import static com.iflytek.msc.MSC.QTTSSessionEnd;
-import static com.iflytek.msc.MSC.QTTSTextPut;
+//import static com.iflytek.msc.MSC.QTTSAudioGet;
+//import static com.iflytek.msc.MSC.QTTSFini;
+//import static com.iflytek.msc.MSC.QTTSInit;
+//import static com.iflytek.msc.MSC.QTTSSessionBegin;
+//import static com.iflytek.msc.MSC.QTTSSessionEnd;
+//import static com.iflytek.msc.MSC.QTTSTextPut;
 import static java.util.Arrays.copyOf;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.apache.commons.io.FileUtils.getFile;
@@ -24,8 +24,8 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.iflytek.msc.MSCSessionInfo;
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 
 public class Synthesizer {
 
@@ -66,7 +66,8 @@ public class Synthesizer {
 	public static int initialization() {
 		String configs = "appid=" + appId;
 		logger.info("QTTSInit, appid is {}", appId);
-		int ret = QTTSInit(configs.getBytes());
+		// int ret = QTTSInit(configs.getBytes());
+		int ret = MscLibrary.INSTANCE.QTTSInit(configs);
 		if (0 != ret) {
 			logger.error("QTTSInit failed, error code is {}", ret);
 		}
@@ -76,7 +77,8 @@ public class Synthesizer {
 	public static int finalization() {
 
 		logger.info("QTTSFini");
-		int ret = QTTSFini();
+		// int ret = QTTSFini();
+		int ret = MscLibrary.INSTANCE.QTTSFini();
 		if (0 != ret) {
 			logger.error("QTTSFini failed, error code is {}", ret);
 		}
@@ -118,45 +120,54 @@ public class Synthesizer {
 		if (null != params) {
 			synthParams = params;
 		}
-		MSCSessionInfo info = new MSCSessionInfo();
+		//MSCSessionInfo info = new MSCSessionInfo();
 		logger.info("QTTSSessionBegin, params is {}", synthParams);
-		char[] sessionId = QTTSSessionBegin(synthParams.getBytes(), info);
-		int ret = info.errorcode;
+		// char[] sessionId = QTTSSessionBegin(synthParams.getBytes(), info);
+		IntByReference errorCode = new IntByReference();
+		String sessionID = MscLibrary.INSTANCE.QTTSSessionBegin(synthParams,
+				errorCode);
+		int ret = errorCode.getValue();
 		if (0 != ret) {
 			logger.error("QTTSSessionBegin failed, error code is {}", ret);
 			return ret;
 		}
-		logger.info("QTTSSession: {}", new String(sessionId));
+		logger.info("QTTSSession: {}", sessionID);
 		logger.info("QTTSTextPut, text is {}", text);
-		ret = QTTSTextPut(sessionId, text.getBytes());
+		ret = MscLibrary.INSTANCE.QTTSTextPut(sessionID, text, text.length(),
+				null);
 		if (0 != ret) {
 			logger.error("QTTSTextPut failed, error code is {}", ret);
-			QTTSSessionEnd(sessionId, "TextPutError".getBytes());
+			MscLibrary.INSTANCE.QTTSSessionEnd(sessionID, "TextPutError");
 			return ret;
 		}
 
 		/* 获取合成音频 */
 		while (true) {
-			byte[] result = QTTSAudioGet(sessionId, info);
+			IntByReference audioLen = new IntByReference();
+			IntByReference synthStatus = new IntByReference();
+			Pointer result = MscLibrary.INSTANCE.QTTSAudioGet(sessionID,
+					audioLen, synthStatus, errorCode);
 			// logger.info("{}",result);
-			ret = info.errorcode;
+			ret = errorCode.getValue();
 			if (0 != ret) {
 				logger.error("QTTSAudioGet failed, error code is {}", ret);
 				break;
 			}
 			try {
-				writeByteArrayToFile(file, result, true);
+
+				writeByteArrayToFile(file,
+						result.getByteArray(0, audioLen.getValue()), true);
 			} catch (IOException e) {
 				logger.error(e.getMessage(), e);
 				break;
 			}
-			if (2 == info.sesstatus) {
+			if (2 == synthStatus.getValue()) {
 				logger.info("QTTSAudioGet: get end of data.");
 				break;
 			}
 		}
 		logger.info("QTTSSessionEnd");
-		ret = QTTSSessionEnd(sessionId, "Normal".getBytes());
+		ret = MscLibrary.INSTANCE.QTTSSessionEnd(sessionID, "Normal");
 		if (0 != ret) {
 			logger.error("QTTSSessionEnd failed, error code is {}" + ret);
 		}
@@ -237,27 +248,27 @@ public class Synthesizer {
 	}
 
 	public static void main(String[] args) {
-		
-		if(args.length < 2){
-			
-			System.out.println("usage: java -jar speech[-version].jar text filename [params] ");
-			
-		}else{
-			
+
+		if (args.length < 2) {
+
+			System.out
+					.println("usage: java -jar speech[-version].jar text filename [params] ");
+
+		} else {
+
 			String text = args[0];
 			String filename = args[1];
 			String params = null;
-			if (args.length > 2){
+			if (args.length > 2) {
 				params = args[2];
 			}
-			
+
 			Synthesizer.initialization();
-			
+
 			Synthesizer.textToAmr(text, filename, params);
-	              
+
 			Synthesizer.finalization();
 		}
-
 
 	}
 }
