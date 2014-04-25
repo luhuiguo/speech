@@ -112,6 +112,15 @@
 	</dependencies>
 
 	<build>
+		<resources>
+			<resource>
+				<targetPath>lib/</targetPath>
+				<directory>lib/</directory>
+				<includes>
+					<include>**/Msc.jar</include>
+				</includes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
