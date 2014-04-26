@@ -2,15 +2,16 @@ package com.luhuiguo.speech;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
-import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 public interface MscLibrary extends Library {
-	MscLibrary INSTANCE = (MscLibrary) Native.loadLibrary(
-			Platform.is64Bit() ? "msc64" : "msc32", MscLibrary.class);
+	// MscLibrary INSTANCE = (MscLibrary) Native.loadLibrary(
+	// Platform.is64Bit() ? "msc64" : "msc32", MscLibrary.class);
+	MscLibrary INSTANCE = (MscLibrary) Native.loadLibrary("msc",
+			MscLibrary.class);
 
 	String QTTSSessionBegin(String params, IntByReference errorCode);
 
@@ -123,4 +124,10 @@ public interface MscLibrary extends Library {
 	int QISRLogEventW(WString sessionID, WString event, WString value);
 
 	String QISRGetSessionParams(String sessionID, IntByReference errorCode);
+
+	//Windows
+	int MSPLogin(String usr, String pwd, String params);
+
+	int MSPLogout();
+
 }

@@ -18,6 +18,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
@@ -30,15 +31,17 @@ public class Synthesizer {
 	public static final int AMR_FRAME_COUNT_PER_SECOND = 50;
 
 	public static final String CONFIG_FILE = "/config.properties";
-	public static final String APP_ID = "appId";
-	public static final String SYNTHESIZE_PARAMS = "synthesizeParams";
-	public static final String AMR_MODE = "amrMode";
+	public static final String APP_ID = "app_id";
+	public static final String WINDOWS_APP_ID = "windows_app_id";
+	public static final String DEFAULT_PARAMS = "default_params";
+	public static final String AMR_MODE = "amr_mode";
 
 	public static final String PCM_EXTENSION = "pcm";
 	public static final String AMR_EXTENSION = "amr";
 
+	private static String windowsAppId;
 	private static String appId;
-	private static String synthesizeParams;
+	private static String defaultParams;
 	private static Mode amrMode;
 
 	private static final Logger logger = LoggerFactory
@@ -50,7 +53,8 @@ public class Synthesizer {
 		try {
 			prop.load(in);
 			appId = prop.getProperty(APP_ID).trim();
-			synthesizeParams = prop.getProperty(SYNTHESIZE_PARAMS).trim();
+			windowsAppId = prop.getProperty(WINDOWS_APP_ID).trim();
+			defaultParams = prop.getProperty(DEFAULT_PARAMS).trim();
 			amrMode = Mode.valueOf(prop.getProperty(AMR_MODE).trim());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -58,9 +62,18 @@ public class Synthesizer {
 	}
 
 	public static int initialization() {
-		String configs = "appid=" + appId;
-		logger.info("QTTSInit, appid is {}", appId);
-		int ret = MscLibrary.INSTANCE.QTTSInit(configs);
+
+		int ret = 0;
+		if (Platform.isWindows()) {
+			String configs = "appid=" + windowsAppId;
+			logger.info("QTTSInit, appid is {}", windowsAppId);
+			ret = MscLibrary.INSTANCE.MSPLogin(null, null, configs);
+		} else {
+			String configs = "appid=" + appId;
+			logger.info("QTTSInit, appid is {}", appId);
+			ret = MscLibrary.INSTANCE.QTTSInit(configs);
+		}
+
 		if (0 != ret) {
 			logger.error("QTTSInit failed, error code is {}", ret);
 		}
@@ -68,12 +81,17 @@ public class Synthesizer {
 	}
 
 	public static int finalization() {
+		int ret = 0;
 
-		logger.info("QTTSFini");
-		int ret = MscLibrary.INSTANCE.QTTSFini();
+		if (Platform.isWindows()) {
+			ret = MscLibrary.INSTANCE.MSPLogout();
+		} else {
+			ret = MscLibrary.INSTANCE.QTTSFini();
+		}
 		if (0 != ret) {
 			logger.error("QTTSFini failed, error code is {}", ret);
 		}
+		logger.info("QTTSFini");
 		return ret;
 	}
 
@@ -88,8 +106,7 @@ public class Synthesizer {
 		deleteQuietly(amrFile);
 		File pcmFile = getFile(pcmFilename);
 		deleteQuietly(pcmFile);
-		logger.info("TEXT: {} >> PCM: {}", text,
-				pcmFile.getAbsolutePath());
+		logger.info("TEXT: {} >> PCM: {}", text, pcmFile.getAbsolutePath());
 		int ret = textToPcm(text, pcmFile, params);
 		if (0 != ret) {
 			logger.error("textToPcm failed, error code is {}", ret);
@@ -108,7 +125,7 @@ public class Synthesizer {
 
 	public static int textToPcm(String text, File file, String params) {
 
-		String synthParams = synthesizeParams;
+		String synthParams = defaultParams;
 		if (null != params) {
 			synthParams = params;
 		}
@@ -123,8 +140,8 @@ public class Synthesizer {
 		}
 		logger.info("QTTSSession: {}", sessionID);
 		logger.info("QTTSTextPut, text is {}", text);
-		ret = MscLibrary.INSTANCE.QTTSTextPut(sessionID, text, text.getBytes().length,
-				null);
+		ret = MscLibrary.INSTANCE.QTTSTextPut(sessionID, text,
+				text.getBytes().length, null);
 		if (0 != ret) {
 			logger.error("QTTSTextPut failed, error code is {}", ret);
 			MscLibrary.INSTANCE.QTTSSessionEnd(sessionID, "TextPutError");
@@ -137,19 +154,17 @@ public class Synthesizer {
 			IntByReference synthStatus = new IntByReference();
 			Pointer result = MscLibrary.INSTANCE.QTTSAudioGet(sessionID,
 					audioLen, synthStatus, errorCode);
+			if(null!=result){
+				try {
+					writeByteArrayToFile(file, result.getByteArray(0, audioLen.getValue()), true);
+				} catch (IOException e) {
+					logger.error(e.getMessage(), e);
+					break;
+				}
+			}
 			ret = errorCode.getValue();
 			if (0 != ret) {
 				logger.error("QTTSAudioGet failed, error code is {}", ret);
-				break;
-			}
-			try {
-				int len = audioLen.getValue();
-				logger.info("audioLen: {}", len);
-				byte[] data = result.getByteArray(0, len);
-
-				writeByteArrayToFile(file, data, true);
-			} catch (IOException e) {
-				logger.error(e.getMessage(), e);
 				break;
 			}
 			if (2 == synthStatus.getValue()) {
