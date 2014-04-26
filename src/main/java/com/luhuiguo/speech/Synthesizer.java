@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -140,8 +141,12 @@ public class Synthesizer {
 		}
 		logger.info("QTTSSession: {}", sessionID);
 		logger.info("QTTSTextPut, text is {}", text);
-		ret = MscLibrary.INSTANCE.QTTSTextPut(sessionID, text,
-				text.getBytes().length, null);
+		try {
+			ret = MscLibrary.INSTANCE.QTTSTextPut(sessionID, text,
+					text.getBytes("UTF-8").length, null);
+		} catch (UnsupportedEncodingException e) {
+			logger.error(e.getMessage(), e);
+		}
 		if (0 != ret) {
 			logger.error("QTTSTextPut failed, error code is {}", ret);
 			MscLibrary.INSTANCE.QTTSSessionEnd(sessionID, "TextPutError");
@@ -154,9 +159,10 @@ public class Synthesizer {
 			IntByReference synthStatus = new IntByReference();
 			Pointer result = MscLibrary.INSTANCE.QTTSAudioGet(sessionID,
 					audioLen, synthStatus, errorCode);
-			if(null!=result){
+			if (null != result) {
 				try {
-					writeByteArrayToFile(file, result.getByteArray(0, audioLen.getValue()), true);
+					writeByteArrayToFile(file,
+							result.getByteArray(0, audioLen.getValue()), true);
 				} catch (IOException e) {
 					logger.error(e.getMessage(), e);
 					break;
